@@ -215,3 +215,83 @@ for patent in patent_data:
     print('专利标题:', patent['title'])
     print('专利信息:', patent['info'])
     print('--------------------------------------------')
+
+题一修改代码：
+import requests
+import json
+import csv
+from datetime import datetime
+
+def get_policy_data(start_date, end_date):
+    start_date = datetime.strptime(start_date, "%Y%m%d").strftime("%Y-%m-%d")
+    end_date = datetime.strptime(end_date, "%Y%m%d").strftime("%Y-%m-%d")
+
+    base_url = "https://www.gd.gov.cn/gkmlpt/policy#6"
+    params = {
+        "categoryid": "3324",
+        "searchtime": "2",
+        "title": "",
+        "source": "",
+        "start": start_date,
+        "end": end_date,
+        "page": "1",
+        "pagesize": "300",
+        "is_banner": "",
+        "keyword": ""
+    }
+
+    try:
+        response = requests.get(base_url, params=params)
+        response.raise_for_status()
+        data = json.loads(response.text)
+    except requests.exceptions.RequestException as e:
+        print("请求发生异常：", e)
+        return
+    except json.JSONDecodeError as e:
+        print("JSON 解析错误：", e)
+        return
+
+    headers = ['索引号', '发布机构', '发布日期', '政策标题', '政策正文文本', '政策正文附件链接']
+    rows = []
+
+    for item in data['data']:
+        index_no = item['IndexNo']
+        publisher = item['Publisher']
+        publish_date = item['PublishDate']
+        title = item['Title']
+        content_text = item['ContentText']
+        attachment_url = item['AccessoryURL']
+
+        row = [index_no, publisher, publish_date, title, content_text, attachment_url]
+        rows.append(row)
+
+    with open('政策数据.csv', 'w', newline='', encoding='utf-8-sig') as f:
+        csv_writer = csv.writer(f)
+        csv_writer.writerow(headers)
+        csv_writer.writerows(rows)
+
+    print(f"成功获取并保存了 {len(rows)} 条政策数据。")
+
+start_date = input("请输入起始日期（格式：YYYYMMDD）：")
+end_date = input("请输入结束日期（格式：YYYYMMDD）：")
+
+get_policy_data(start_date, end_date)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
